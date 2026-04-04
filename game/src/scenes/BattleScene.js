@@ -23,7 +23,7 @@ export class BattleScene extends Phaser.Scene {
     // ─── LIFECYCLE ──────────────────────────────────────────────────────────
 
     create() {
-        this.gold      = 250;
+        this.gold      = 300;
         this.gameOver  = false;
         this.playerData = this.game.registry.get('playerData');
 
@@ -44,8 +44,11 @@ export class BattleScene extends Phaser.Scene {
         // --- Група ворогів (Arcade Sprites через group.create()) ---
         this.enemies = this.physics.add.group();
 
-        // --- Група веж (звичайні Image, фізика не потрібна) ---
+        // --- Група башт-турелей (розміщені гравцем через D&D) ---
         this.towers = this.add.group();
+
+        // --- Група юнітів-гравця (HoMM: розставлені на початку на лініях) ---
+        this.playerUnits = this.add.group();
 
         // --- Візуалізація доріжок ---
         const g = this.add.graphics();
@@ -60,6 +63,9 @@ export class BattleScene extends Phaser.Scene {
             (proj, enemy) => proj.active && enemy.active,
             this
         );
+
+        // --- Попередньо розставити юніти на лініях (HoMM-стиль) ---
+        LANES.forEach((y, i) => this.spawnUnit(y, i));
 
         // --- Wave Manager ---
         this.waveManager = new WaveManager(this);
@@ -89,7 +95,7 @@ export class BattleScene extends Phaser.Scene {
     // ─── PUBLIC API (для UIScene) ────────────────────────────────────────────
 
     /**
-     * Розмістити вежу на доріжці.
+     * Розмістити башту-турель на доріжці (D&D з інвентарю).
      * @param {number} x
      * @param {number} y
      * @param {string} towerKey — ключ з TowerRegistry
@@ -115,12 +121,46 @@ export class BattleScene extends Phaser.Scene {
 
         // Зберігаємо ref таймера — щоб скасувати при game over
         tower.shootTimer = this.time.addEvent({
-            delay:         def.fireRate,
-            callback:      () => { if (tower.active) this._shoot(tower); },
-            loop:          true
+            delay:    def.fireRate,
+            callback: () => { if (tower.active) this._shoot(tower); },
+            loop:     true
         });
 
         return true;
+    }
+
+    /**
+     * Розставити юніта-гравця (HoMM-стиль): ліва сторона лінії.
+     * Анімація "дихання" + таймер автопострілу.
+     * @param {number} y — Y-координата лінії
+     * @param {number} i — індекс лінії (зміщує фазу анімації)
+     */
+    spawnUnit(y, i) {
+        const def  = TOWERS.goose;
+        const unit = this.add.sprite(120, y, def.texture).setScale(0.85).setDepth(5);
+
+        // HoMM idle «дихання» — плавний підйом/спуск зі зміщеною фазою на кожній лінії
+        this.tweens.add({
+            targets:  unit,
+            y:        `+=${10}`,
+            duration: 1500 + i * 200,
+            yoyo:     true,
+            loop:     -1,
+            ease:     'Sine.easeInOut'
+        });
+
+        // Прив'язати def щоб _shoot() працював однаково для юнітів і башт
+        unit.def   = def;
+        unit.level = 1;
+
+        // Зберігаємо таймер для можливого скасування в _endGame
+        unit.shootTimer = this.time.addEvent({
+            delay:    def.fireRate,
+            callback: () => { if (unit.active && !this.gameOver) this._shoot(unit); },
+            loop:     true
+        });
+
+        this.playerUnits.add(unit);
     }
 
     /**
@@ -135,7 +175,7 @@ export class BattleScene extends Phaser.Scene {
 
         enemy.hp    = hp;
         enemy.maxHp = hp;
-        enemy.setScale(0.8);
+        enemy.setScale(0.8).setDepth(4);
 
         if (enemy.body) {
             enemy.body.setVelocityX(-120);
@@ -218,29 +258,29 @@ export class BattleScene extends Phaser.Scene {
 
     // ─── PRIVATE ─────────────────────────────────────────────────────────────
 
-    /** Постріл вежі. Дістаємо снаряд із пулу, НЕ створюємо новий об'єкт. */
-    _shoot(tower) {
-        const def    = tower.def;
-        const laneY  = tower.y;
+    /** Постріл юніта/башти. Дістаємо снаряд із пулу, НЕ створюємо новий об'єкт. */
+    _shoot(unit) {
+        const def   = unit.def;
+        const laneY = unit.y;
 
         // Перевірити наявність цілі на доріжці — O(n) але з ранньою зупинкою
         const hasTarget = this.enemies.getChildren().some(
             e => e.active &&
-                 Math.abs(e.y - laneY) < 25 &&
-                 e.x > tower.x
+                 Math.abs(e.y - laneY) < 30 &&
+                 e.x > unit.x
         );
         if (!hasTarget) return;
 
         // group.get() — повертає неактивний об'єкт з пулу АБО створює новий
         // (якщо pool < maxSize). Повертає null тільки при повному переповненні.
-        const tx  = tower.x + 22;
+        const tx   = unit.x + 28;
         const proj = this.projectiles.get(tx, laneY, 'bullet');
         if (!proj) return;
 
-        proj.setActive(true).setVisible(true);
+        proj.setActive(true).setVisible(true).setDepth(10); // depth > ворогів (4)
         proj.setTint(def.bulletColor);
         proj.setScale(def.bulletSize / 8);
-        proj.damage = Calculator.getTowerDamage(def.damage, tower.level);
+        proj.damage = Calculator.getTowerDamage(def.damage, unit.level);
 
         if (proj.body) {
             proj.body.enable = true;
@@ -277,9 +317,14 @@ export class BattleScene extends Phaser.Scene {
         if (this.gameOver) return;
         this.gameOver = true;
 
-        // Зупинити всі таймери веж
+        // Зупинити всі таймери башт (D&D)
         this.towers.getChildren().forEach(t => {
             if (t.shootTimer) t.shootTimer.remove(false);
+        });
+
+        // Зупинити всі таймери юнітів-гравця (HoMM)
+        this.playerUnits.getChildren().forEach(u => {
+            if (u.shootTimer) u.shootTimer.remove(false);
         });
 
         this.waveManager.destroy();

@@ -9,9 +9,9 @@ export const TOWERS = {
         name: 'Бойовий Гусак',
         description: 'Швидка маневрена турель. Атакує клювом та гоготом.',
         cost: 50,
-        fireRate: 800,        // мс між пострілами
-        damage: 25,           // базовий урон
-        bulletSpeed: 500,     // px/s
+        fireRate: 1000,       // мс між пострілами
+        damage: 30,           // базовий урон
+        bulletSpeed: 550,     // px/s
         bulletColor: 0xffee00,
         bulletSize: 6,        // радіус кола (відображення)
         texture: 'goose'
@@ -22,8 +22,8 @@ export const TOWERS = {
         description: 'Важка артилерія. Заливає ворогів гарячим борщем.',
         cost: 150,
         fireRate: 2500,
-        damage: 80,
-        bulletSpeed: 200,
+        damage: 100,
+        bulletSpeed: 300,
         bulletColor: 0x8b0000,
         bulletSize: 12,
         texture: 'borshch'
