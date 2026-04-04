@@ -7,6 +7,7 @@ export const TOWERS = {
     goose: {
         key: 'goose',
         name: 'Бойовий Гусак',
+        shortName: 'Гусак',
         description: 'Швидка маневрена турель. Атакує клювом та гоготом.',
         cost: 50,
         fireRate: 1000,       // мс між пострілами
@@ -19,6 +20,7 @@ export const TOWERS = {
     borshch: {
         key: 'borshch',
         name: 'Борщова Гармата',
+        shortName: 'Гармата',
         description: 'Важка артилерія. Заливає ворогів гарячим борщем.',
         cost: 150,
         fireRate: 2500,

@@ -112,9 +112,8 @@ export class UIScene extends Phaser.Scene {
                 fontSize: '11px', fill: '#ffcc00'
             }).setOrigin(0.5).setDepth(12);
 
-            // Назва (коротка, перший рядок)
-            const label = def.name.split(' ').slice(-1)[0]; // «Гусак» / «Гармата»
-            this.add.text(cx, cy - SLOT_H / 2 + 5, label, {
+            // Назва (коротка) — з явного поля shortName
+            this.add.text(cx, cy - SLOT_H / 2 + 5, def.shortName, {
                 fontSize: '10px', fill: '#cccccc'
             }).setOrigin(0.5, 0).setDepth(12);
 

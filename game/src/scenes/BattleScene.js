@@ -132,11 +132,12 @@ export class BattleScene extends Phaser.Scene {
     /**
      * Розставити юніта-гравця (HoMM-стиль): ліва сторона лінії.
      * Анімація "дихання" + таймер автопострілу.
-     * @param {number} y — Y-координата лінії
-     * @param {number} i — індекс лінії (зміщує фазу анімації)
+     * @param {number} y       — Y-координата лінії
+     * @param {number} i       — індекс лінії (зміщує фазу анімації)
+     * @param {string} towerKey — ключ з TowerRegistry (за замовчуванням 'goose')
      */
-    spawnUnit(y, i) {
-        const def  = TOWERS.goose;
+    spawnUnit(y, i, towerKey = 'goose') {
+        const def  = TOWERS[towerKey];
         const unit = this.add.sprite(120, y, def.texture).setScale(0.85).setDepth(5);
 
         // HoMM idle «дихання» — плавний підйом/спуск зі зміщеною фазою на кожній лінії
@@ -277,7 +278,7 @@ export class BattleScene extends Phaser.Scene {
         const proj = this.projectiles.get(tx, laneY, 'bullet');
         if (!proj) return;
 
-        proj.setActive(true).setVisible(true).setDepth(10); // depth > ворогів (4)
+        proj.setActive(true).setVisible(true).setDepth(10); // depth > ворогів (depth 4)
         proj.setTint(def.bulletColor);
         proj.setScale(def.bulletSize / 8);
         proj.damage = Calculator.getTowerDamage(def.damage, unit.level);
