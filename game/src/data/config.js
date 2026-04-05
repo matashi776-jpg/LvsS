@@ -35,6 +35,12 @@ export const CONFIG = {
     'Нужна печать №7!'
   ],
 
+  // Wave tuning
+  waveCountMultiplier: 1.5,   // enemies per wave = 3 + floor(wave * waveCountMultiplier)
+  enemySpawnDelay: 1800,      // ms between enemy spawns within a wave
+  waveCompleteDelay: 2000,    // ms after last enemy dies before wave-complete fires
+  nextWaveDelay: 3000,        // ms before next wave starts after wave-complete message
+
   // Initial state
   startGold: 150,
   startHealth: 10,

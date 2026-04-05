@@ -23,13 +23,13 @@ export default class WaveManager {
     this.wave++;
     this.waveInProgress = true;
 
-    const count = 3 + Math.floor(this.wave * 1.5);
+    const count = 3 + Math.floor(this.wave * CONFIG.waveCountMultiplier);
     this.remaining = count;
 
     for (let i = 0; i < count; i++) {
       const type = this._pickType(this.wave);
       const laneIndex = Math.floor(Math.random() * CONFIG.lanes.length);
-      this.scene.time.delayedCall(i * 1800, () => {
+      this.scene.time.delayedCall(i * CONFIG.enemySpawnDelay, () => {
         // Scene might have been stopped/destroyed by now
         if (!this.scene.scene || !this.scene.scene.isActive('BattleScene')) return;
         this.scene.spawnEnemy(type, laneIndex, this.wave);
@@ -44,7 +44,7 @@ export default class WaveManager {
     this.remaining = Math.max(0, this.remaining - 1);
     if (this.remaining === 0 && this.waveInProgress) {
       this.waveInProgress = false;
-      this.scene.time.delayedCall(2000, () => {
+      this.scene.time.delayedCall(CONFIG.waveCompleteDelay, () => {
         if (this.scene.scene && this.scene.scene.isActive('BattleScene')) {
           this.scene.onWaveComplete();
         }

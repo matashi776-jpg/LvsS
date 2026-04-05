@@ -88,18 +88,11 @@ export default class BattleScene extends Phaser.Scene {
 
   _createHero() {
     const y = 300;
-    const key = this.textures.exists('hero') ? 'hero' : 'hero';
-    this.hero = this.add.sprite(CONFIG.heroX, y, key);
-
-    if (this.textures.exists('hero') && this.textures.get('hero').source[0].width > 2) {
-      this.hero.setScale(0.2);
-    } else {
-      this.hero.setDisplaySize(50, 80);
-    }
-
+    this.hero = this.add.sprite(CONFIG.heroX, y, 'hero');
+    this.hero.setDisplaySize(50, 80);
     this.hero.setDepth(5);
 
-    // Limping idle tween
+    // Limping idle tween (reflects the bandaged leg)
     this.tweens.add({
       targets: this.hero,
       y: y + 8,
@@ -119,15 +112,8 @@ export default class BattleScene extends Phaser.Scene {
   }
 
   _placeGoose(x, y, laneIndex, paid) {
-    const key = this.textures.exists('goose') && this.textures.get('goose').source[0].width > 2
-      ? 'goose' : 'goose';
-    const goose = this.add.sprite(x, y, key);
-
-    if (this.textures.exists('goose') && this.textures.get('goose').source[0].width > 2) {
-      goose.setScale(0.15);
-    } else {
-      goose.setDisplaySize(42, 52);
-    }
+    const goose = this.add.sprite(x, y, 'goose');
+    goose.setDisplaySize(42, 52);
 
     goose.setDepth(4);
     goose.laneIndex = laneIndex;
@@ -169,10 +155,8 @@ export default class BattleScene extends Phaser.Scene {
   // ── Projectile pool ───────────────────────────────────────────────────
 
   _setupProjectilePool() {
-    const key = this.textures.exists('borshch') && this.textures.get('borshch').source[0].width > 2
-      ? 'borshch' : 'borshch';
     this.projectiles = this.physics.add.group({
-      defaultKey: key,
+      defaultKey: 'borshch',
       maxSize: 80,
       runChildUpdate: false
     });
@@ -185,13 +169,7 @@ export default class BattleScene extends Phaser.Scene {
     if (!proj) return;
 
     proj.setActive(true).setVisible(true);
-
-    const isReal = this.textures.exists('borshch') && this.textures.get('borshch').source[0].width > 2;
-    if (isReal) {
-      proj.setScale(0.06);
-    } else {
-      proj.setDisplaySize(18, 18);
-    }
+    proj.setDisplaySize(18, 18);
 
     proj.body.reset(goose.x + 28, laneY);
     proj.setVelocityX(420);
@@ -411,7 +389,7 @@ export default class BattleScene extends Phaser.Scene {
       `✅ Хвиля ${this.currentWave} пройдена!  +${bonus}💰`,
       '#00FF88'
     );
-    this.time.delayedCall(3000, () => this._launchNextWave());
+    this.time.delayedCall(CONFIG.nextWaveDelay, () => this._launchNextWave());
   }
 
   // ── Hero ability ──────────────────────────────────────────────────────
@@ -466,11 +444,7 @@ export default class BattleScene extends Phaser.Scene {
       const iy = 557;
 
       const icon = this.add.sprite(ix, iy, 'goose');
-      if (this.textures.exists('goose') && this.textures.get('goose').source[0].width > 2) {
-        icon.setScale(0.11);
-      } else {
-        icon.setDisplaySize(38, 48);
-      }
+      icon.setDisplaySize(38, 48);
       icon.setDepth(14).setInteractive();
 
       this.add.text(ix, iy + 24, `${CONFIG.goose.cost}💰`, {
@@ -485,11 +459,7 @@ export default class BattleScene extends Phaser.Scene {
 
     // Ghost sprite shown while dragging
     this._ghost = this.add.sprite(-200, -200, 'goose').setAlpha(0.55).setDepth(15);
-    if (this.textures.exists('goose') && this.textures.get('goose').source[0].width > 2) {
-      this._ghost.setScale(0.13);
-    } else {
-      this._ghost.setDisplaySize(42, 52);
-    }
+    this._ghost.setDisplaySize(42, 52);
 
     this.input.on('dragstart', (_ptr, obj) => {
       if (!this._inventoryIcons.includes(obj)) return;
@@ -579,7 +549,8 @@ export default class BattleScene extends Phaser.Scene {
     this.health = Math.max(0, this.health - 1);
     this._updateRegistry();
     this.cameras.main.shake(300, 0.015);
-    this._floatText(70, 300, '💔 -1 Здоров\'я!', '#FF0000');
+    // Float the damage text near the hero
+    this._floatText(CONFIG.heroX + 20, CONFIG.lanes[enemy.laneIndex], '💔 -1 Здоров\'я!', '#FF0000');
     this._cleanupEnemy(enemy);
     this.waveManager.onEnemyRemoved();
 
